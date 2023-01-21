@@ -5,9 +5,6 @@
 #include <string.h>
 #include <pthread.h>
 
-/*
-Function responsible for allocating and setting your physical memory 
-*/
 char *heap;
 unsigned long numPhysPages; //number of pages in (1GB) physical memory
 int physBitMapChars; //number of chars needed for physical memory bitmap (1 bit per page)
@@ -125,7 +122,6 @@ void set_physical_mem() {
 		tlb[i].physAddr = 0;
 	}
     
-    //HINT: Also calculate the number of physical and virtual pages and allocate
     //virtual and physical bitmaps and initialize them
 
 }
@@ -133,13 +129,11 @@ void set_physical_mem() {
 
 /*
  * Part 2: Add a virtual to physical page translation to the TLB.
- * Feel free to extend the function arguments or return type.
  */
 int
 add_TLB(void *va, void *pa)
 {
 
-    /*Part 2 HINT: Add a virtual to physical page translation to the TLB */
 //look for a free spot in TLB, if none then evict something and put new translation in free TLB entry
 	//depending on what va and pa are returned (whether va and pa are base addresses of their respective pages, or they are
 	//specific addresses inside their respective pages, we might have to subtract the offset from both
@@ -219,13 +213,7 @@ The function takes a virtual address and page directories starting address and
 performs translation to return the physical address
 */
 void *translate(pde_t **pgdir, void *va) { //changed return type from pte_t * to void *
-    /* Part 1 HINT: Get the Page directory index (1st level) Then get the
-    * 2nd-level-page table index using the virtual address.  Using the page
-    * directory index and page table index get the physical address.
-    *
-    * Part 2 HINT: Check the TLB before performing the translation. If
-    * translation exists, then you can return physical address from the TLB.
-    */
+
 	void *check = check_TLB(va);
 	if(check != NULL)
 		return check;
@@ -278,9 +266,6 @@ int
 page_map(pde_t **pgdir, void *va, void *pa)
 {
 
-    /*HINT: Similar to translate(), find the page directory (1st level)
-    and page table (2nd-level) indices. If no mapping exists, set the
-    virtual to physical mapping */
 	unsigned long int virtaddr = (unsigned long int)va; //cast va to unsigned long
         unsigned long int VPN = virtaddr >> numOffsetBits;
         unsigned long int PDindex = VPN >> numPTbits;
@@ -338,20 +323,12 @@ and used by the benchmark
 */
 void *t_malloc(unsigned int num_bytes) {
 
-    /* 
-     * HINT: If the physical memory is not yet initialized, then allocate and initialize.
-     */
-pthread_mutex_lock(&mutex);	
+	pthread_mutex_lock(&mutex);	
 	if(initialize == 0) {
 		set_physical_mem();
 		initialize = 1;
 	}
-   /* 
-    * HINT: If the page directory is not initialized, then initialize the
-    * page directory. Next, using get_next_avail(), check if there are free pages. If
-    * free pages are available, set the bitmaps and map a new page. Note, you will 
-    * have to mark which physical pages are used. 
-    */
+   
 	unsigned int numPages = num_bytes/PGSIZE;
 	if(num_bytes % PGSIZE != 0)
 		numPages++;
@@ -417,11 +394,6 @@ void t_free(void *va, int size) {
 */
 void put_value(void *va, void *val, int size) {
 
-    /* HINT: Using the virtual address and translate(), find the physical page. Copy
-     * the contents of "val" to a physical page. NOTE: The "size" value can be larger 
-     * than one page. Therefore, you may have to find multiple pages using translate()
-     * function.
-     */	
 	unsigned long int virtAddr = (unsigned long int)va;
 	unsigned long int x = 1;
 	for(int i = 0; i < numOffsetBits; i++) {
@@ -462,7 +434,7 @@ void put_value(void *va, void *val, int size) {
                 virtAddr += PGSIZE;
                 val+=PGSIZE;
         }
-//	pthread_mutex_unlock(&mutex);
+
 	return;
 }
 
@@ -470,9 +442,6 @@ void put_value(void *va, void *val, int size) {
 /*Given a virtual address, this function copies the contents of the page to val*/
 void get_value(void *va, void *val, int size) {
 
-    /* HINT: put the values pointed to by "va" inside the physical memory at given
-    * "val" address. Assume you can access "val" directly by derefencing them.
-    */
 	unsigned long int virtAddr = (unsigned long int)va;
         unsigned long int x = 1;
         for(int i = 0; i < numOffsetBits; i++) {
@@ -523,12 +492,6 @@ multiplication, copy the result to answer.
 */
 void mat_mult(void *mat1, void *mat2, int size, void *answer) {
 
-    /* Hint: You will index as [i * size + j] where  "i, j" are the indices of the
-     * matrix accessed. Similar to the code in test.c, you will use get_value() to
-     * load each element and perform multiplication. Take a look at test.c! In addition to 
-     * getting the values from two matrices, you will perform multiplication and 
-     * store the result to the "answer array"
-     */
     int x, y, val_size = sizeof(int);
     int i, j, k;
     for (i = 0; i < size; i++) {
